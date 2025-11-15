@@ -1,0 +1,15 @@
+tqdm
+pandas>=2.0
+numpy>=1.25
+matplotlib>=3.8
+plotly>=5.18
+fastapi>=0.110
+uvicorn>=0.27
+pydantic>=2.5
+pytest>=7.4
+toon-format
+tiktoken
+python-dotenv
+requests
+Jinja2
+scipy
