@@ -33,7 +33,7 @@ install: install-backend install-frontend
 
 install-backend:
 	@echo "Installing backend dependencies..."
-	pip install -r requirements.txt
+	pip install -r python-backend/requirements.txt
 	pip install -e .
 
 install-frontend:
@@ -54,7 +54,7 @@ test-frontend:
 # Run targets (development)
 run-backend:
 	@echo "Starting FastAPI server on http://localhost:8000"
-	uvicorn src.server:app --reload --host 0.0.0.0 --port 8000
+	cd python-backend && uvicorn src.server:app --reload --host 0.0.0.0 --port 8000
 
 run-frontend:
 	@echo "Starting React development server on http://localhost:3000"
@@ -76,11 +76,10 @@ clean: clean-backend clean-frontend
 
 clean-backend:
 	@echo "Cleaning Python build artifacts..."
-	rm -rf build/
-	rm -rf dist/
-	rm -rf *.egg-info/
-	find . -type d -name __pycache__ -exec rm -r {} + 2>/dev/null || true
-	find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	rm -rf build/ dist/ *.egg-info/
+	rm -rf python-backend/build python-backend/dist python-backend/*.egg-info
+	find python-backend -type d -name __pycache__ -exec rm -r {} + 2>/dev/null || true
+	find python-backend -type f -name "*.pyc" -delete 2>/dev/null || true
 
 clean-frontend:
 	@echo "Cleaning React build artifacts..."
@@ -91,11 +90,11 @@ docker-build: docker-build-backend docker-build-frontend
 
 docker-build-backend:
 	@echo "Building backend Docker image..."
-	docker build -t toon-token-savings-backend -f Dockerfile.backend .
+	docker build -t toon-token-savings-backend -f python-backend/Dockerfile .
 
 docker-build-frontend:
 	@echo "Building frontend Docker image..."
-	docker build -t toon-token-savings-frontend -f Dockerfile.frontend .
+	docker build -t toon-token-savings-frontend -f react-frontend/Dockerfile .
 
 docker-up:
 	@echo "Starting services with docker-compose..."

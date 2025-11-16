@@ -10,7 +10,7 @@ WORKDIR /app
 COPY react-frontend/package.json react-frontend/package-lock.json* ./
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
 # Copy source code
 COPY react-frontend/ ./

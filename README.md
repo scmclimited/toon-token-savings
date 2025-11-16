@@ -30,7 +30,9 @@ This project aims to:
 | Path | Description |
 | --- | --- |
 | `data/` | Synthetic datasets used in the demonstrations (e.g. `employee_records.json`). |
-| `src/` | Python modules for data loading, encoding/decoding, token counting, visualisation and API server. |
+| `python-backend/src/` | Python modules for data loading, encoding/decoding, token counting, visualisation and API server (packaged under the `src` namespace). |
+
+> **Backend layout:** All Python modules live under `python-backend/src` but are imported via the `src` package name. When running Python commands directly, `cd python-backend` first (or ensure `PYTHONPATH=python-backend`) so that the package can be resolved.
 | `pipelines/` | Markdown guides for integrating TOON into LangGraph and MCP pipelines. |
 | `react-frontend/` | A React application that lets users upload files and view token counts and charts. |
 | `tests/` | Unit and integration tests. |
@@ -56,7 +58,7 @@ We recommend using **conda** or **venv** to isolate dependencies.  The project s
 ```bash
 conda create -n toon-env python=3.13
 conda activate toon-env
-pip install -r requirements.txt
+pip install -r python-backend/requirements.txt
 pip install -e .  # Install project in editable mode for tests
 ```
 
@@ -65,13 +67,13 @@ pip install -e .  # Install project in editable mode for tests
 ```bash
 python3.13 -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r python-backend/requirements.txt
 pip install -e .  # Install project in editable mode for tests
 ```
 
 > **Important:** After installing dependencies, verify that the TOON encoder works by running `python -c "from toon_format import encode; print(encode({'test': 'data'}))"`. This should output TOON-formatted text without errors. If you see `NotImplementedError`, you may have the PyPI version installed instead of the GitHub version. Reinstall with `pip uninstall toon-format -y && pip install git+https://github.com/toon-format/toon-python.git`.
 
-The `requirements.txt` file lists all necessary packages, including:
+The `python-backend/requirements.txt` file lists all necessary packages, including:
 
 * `toon-format` (from GitHub) – encode/decode TOON and estimate token savings. **Note:** The PyPI version (0.1.0) doesn't have a working encoder, so we use the GitHub version (`git+https://github.com/toon-format/toon-python.git`) which includes a working implementation.
 * `tiktoken` – tokeniser used by OpenAI models.
@@ -87,10 +89,11 @@ The `requirements.txt` file lists all necessary packages, including:
 The FastAPI server exposes endpoints for encoding, decoding and comparing token counts. To run it locally:
 
 ```bash
-# Using uvicorn directly
+# Using uvicorn directly (run from the python-backend/ directory)
+cd python-backend
 uvicorn src.server:app --reload
 
-# Or using the Make script
+# Or using the Make script (from the repo root)
 make run-backend
 
 # Or using the pyproject.toml script (after installation)
@@ -99,7 +102,7 @@ toon-server
 
 The server will start on `http://localhost:8000`. Open `http://localhost:8000/docs` to view the interactive API documentation.
 
-> **Note:** If you encounter a `RuntimeError: Form data requires "python-multipart" to be installed` error, ensure you have installed all dependencies from `requirements.txt`. Run `pip install python-multipart` if needed.
+> **Note:** If you encounter a `RuntimeError: Form data requires "python-multipart" to be installed` error, ensure you have installed all dependencies from `python-backend/requirements.txt`. Run `pip install python-multipart` if needed.
 
 ### 4. Install Node.js and React dependencies (for the front‑end)
 
@@ -119,10 +122,11 @@ This starts a development server at `http://localhost:3000` where you can upload
 
 ### 5. Running the Python scripts
 
-The entry point of the demonstration is the `src/app.py` script.  It loads the employee dataset, encodes it into both JSON and TOON, counts tokens, prints a comparison table and generates charts.
+The entry point of the demonstration is the `python-backend/src/app.py` script (imported as `src.app`).  It loads the employee dataset, encodes it into both JSON and TOON, counts tokens, prints a comparison table and generates charts.
 
 ```bash
-python -m src.app --data data/employee_records.json --output reports/demo_results
+cd python-backend
+python -m src.app --data ../data/employee_records.json --output ../reports/demo_results
 ```
 
 Options include:
@@ -207,11 +211,11 @@ You can also build and run containers individually:
 
 ```bash
 # Backend
-docker build -t toon-token-savings-backend -f Dockerfile.backend .
+docker build -t toon-token-savings-backend -f python-backend/Dockerfile .
 docker run -p 8000:8000 toon-token-savings-backend
 
 # Frontend
-docker build -t toon-token-savings-frontend -f Dockerfile.frontend .
+docker build -t toon-token-savings-frontend -f react-frontend/Dockerfile .
 docker run -p 3000:80 toon-token-savings-frontend
 ```
 
@@ -248,7 +252,7 @@ The synthetic dataset `employee_records.json` contains 100 mock employee records
 
 ## Token Counting and Savings
 
-The Python module `src/token_counter.py` wraps `tiktoken` to count tokens for arbitrary strings.  For JSON and TOON, we first serialise the data using Python’s built‑in `json` module and the `toon-format` library respectively.  The token counts are measured using the `cl100k_base` encoding (the default for GPT‑4 and many other models).  The module returns the number of tokens and the estimated savings percentage.
+The Python module `python-backend/src/token_counter.py` (imported as `src.token_counter`) wraps `tiktoken` to count tokens for arbitrary strings.  For JSON and TOON, we first serialise the data using Python’s built‑in `json` module and the `toon-format` library respectively.  The token counts are measured using the `cl100k_base` encoding (the default for GPT‑4 and many other models).  The module returns the number of tokens and the estimated savings percentage.
 
 The example below illustrates how to call the module programmatically:
 
@@ -260,6 +264,8 @@ data = load_data('data/employee_records.json')
 result = compare_formats(data)
 print(result)
 ```
+
+> **Tip:** Run the snippet from the `python-backend/` directory (or ensure `PYTHONPATH=python-backend`) so that the `src` package can be resolved.
 
 The returned dictionary contains counts for `json_tokens` and `toon_tokens` and a `savings` field.  You can normalise these counts to the maximum context length of a given model to determine how much additional content can fit in the prompt.
 
@@ -296,7 +302,7 @@ The React frontend provides an intuitive web interface for exploring TOON token 
 
 ### Visualising the Results
 
-The module `src/visualization.py` provides functions to generate several charts:
+The module `python-backend/src/visualization.py` provides functions to generate several charts:
 
 * **Bar chart**: shows the absolute token counts for JSON vs TOON.
 * **Delta line chart**: displays the difference (JSON − TOON) across multiple datasets or iterations.
@@ -368,8 +374,8 @@ These suggestions are intended as constructive feedback for the maintainers of [
 
 If you encounter issues running the scripts or tests:
 
-* **Python-multipart error**: If you see `RuntimeError: Form data requires "python-multipart" to be installed` when starting the API server, run `pip install python-multipart` or reinstall all dependencies with `pip install --force-reinstall -r requirements.txt`.
-* **TOON encoder installation**: This project uses the `toon-format` package from GitHub (not PyPI) because the PyPI version (0.1.0) doesn't have a working encoder. The `requirements.txt` specifies `git+https://github.com/toon-format/toon-python.git`. If you encounter encoder errors:
+* **Python-multipart error**: If you see `RuntimeError: Form data requires "python-multipart" to be installed` when starting the API server, run `pip install python-multipart` or reinstall all dependencies with `pip install --force-reinstall -r python-backend/requirements.txt`.
+* **TOON encoder installation**: This project uses the `toon-format` package from GitHub (not PyPI) because the PyPI version (0.1.0) doesn't have a working encoder. The `python-backend/requirements.txt` specifies `git+https://github.com/toon-format/toon-python.git`. If you encounter encoder errors:
   * **Verify installation**: Run `python -c "from toon_format import encode; print(encode({'test': 'data'}))"` to verify the encoder works.
   * **Reinstall from GitHub**: If the encoder isn't working, reinstall from GitHub:
     ```bash
@@ -378,9 +384,9 @@ If you encounter issues running the scripts or tests:
     ```
   * **Reference documentation**: For the TOON specification, examples, and test fixtures, see the [toon-format/spec](https://github.com/toon-format/spec) repository on GitHub.
 * **Frontend connection errors**: Ensure the API server is running on `http://localhost:8000` before starting the React frontend. Check that the server started successfully and is accessible.
-* **Missing dependencies**: If you encounter import errors or missing package errors, verify that you've activated the correct Python environment and installed all dependencies from `requirements.txt`. Run `pip list` to verify installed packages.
+* **Missing dependencies**: If you encounter import errors or missing package errors, verify that you've activated the correct Python environment and installed all dependencies from `python-backend/requirements.txt`. Run `pip list` to verify installed packages.
 * Ensure that Python 3.13 is activated (`python --version` should report 3.13.x).
-* Delete any cached `.venv` or `__pycache__` directories and reinstall dependencies (`pip install --force-reinstall -r requirements.txt`).
+* Delete any cached `.venv` or `__pycache__` directories and reinstall dependencies (`pip install --force-reinstall -r python-backend/requirements.txt`).
 * Use `--no-plots` to disable plotting when running on headless servers.
 * Run tests with increased verbosity (`pytest -vv`) to locate failing assertions.
 * If encoding fails, check that your dataset is valid JSON and does not contain cyclic references.  Use `src.dataset.load_data` to verify correct loading.

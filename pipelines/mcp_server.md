@@ -17,7 +17,7 @@ By default, tool inputs and outputs are encoded as JSON.  Replacing this with TO
 
 ## Encoding and Decoding Hooks
 
-Assume you have an MCP server implementation (for example, [anthropic/mcp](https://github.com/anthropic/mcp)) running behind a FastAPI interface.  To add TOON support, insert encoding and decoding hooks around tool invocations:
+Assume you have an MCP server implementation (for example, [anthropic/mcp](https://github.com/anthropic/mcp)) running behind a FastAPI interface.  To add TOON support, insert encoding and decoding hooks around tool invocations.  The helper functions live under `python-backend/src` (imported via the `src` namespace), so ensure that directory is on your `PYTHONPATH`:
 
 ```python
 from src.dataset import to_toon, from_toon
@@ -61,6 +61,7 @@ services:
       - "9000:9000"
   api:
     build: .
+    working_dir: /app/python-backend
     command: uvicorn src.server:app --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"

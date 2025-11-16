@@ -12,7 +12,7 @@ This guide shows how to incorporate TOON encoding and decoding into a LangGraph 
 
 ## Encoding and Decoding functions
 
-First define helper functions to serialise data to TOON and back.  Import these from the `src.dataset` module in this repository:
+First define helper functions to serialise data to TOON and back.  Import these from the `src.dataset` module in this repository (the code lives under `python-backend/src`, so ensure that directory is on your `PYTHONPATH`):
 
 ```python
 from langgraph import Node, Edge
@@ -78,7 +78,7 @@ RUN pip install --no-cache-dir langgraph toon-format tiktoken
 CMD ["python", "pipeline.py"]
 ```
 
-Where `pipeline.py` constructs and runs your LangGraph graph.  This repository includes examples in `src/langgraph_pipeline.py` which you can adapt to your use case.
+Where `pipeline.py` constructs and runs your LangGraph graph.  This repository includes examples in `python-backend/src/langgraph_pipeline.py` which you can adapt to your use case.
 
 ## Considerations
 
