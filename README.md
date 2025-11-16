@@ -156,6 +156,8 @@ make clean
 ```
 
 See `make help` for a complete list of available commands.
+![make help output](docs/make_help.png)
+
 
 ### 7. Using Docker
 

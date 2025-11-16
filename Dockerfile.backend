@@ -9,16 +9,18 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
-COPY requirements.txt pyproject.toml ./
+# Copy requirements and project configuration first for better caching
+COPY requirements.txt pyproject.toml README.md ./
+
+# Copy application code (needed for editable install)
+COPY src/ ./src/
+COPY data/ ./data/
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt && \
     pip install --no-cache-dir -e .
 
-# Copy application code
-COPY src/ ./src/
-COPY data/ ./data/
+# Copy tests (not needed for installation)
 COPY tests/ ./tests/
 
 # Expose FastAPI port
