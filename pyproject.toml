@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "toon-token-savings-demo"
+version = "0.1.0"
+description = "Demonstration of token savings using TOON format vs JSON"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "tqdm",
+    "pandas>=2.0",
+    "numpy>=1.25",
+    "matplotlib>=3.8",
+    "plotly>=5.18",
+    "fastapi>=0.110",
+    "uvicorn>=0.27",
+    "pydantic>=2.5",
+    "python-multipart>=0.0.6",
+    "pytest>=7.4",
+    "toon-format",
+    "tiktoken",
+    "python-dotenv",
+    "requests",
+    "Jinja2",
+    "scipy",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-v --tb=short"
+
+[tool.setuptools]
+packages = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.md", "*.txt", "*.json"]
+
+[project.scripts]
+toon-server = "src:run_server"
+
