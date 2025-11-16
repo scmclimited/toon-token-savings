@@ -83,12 +83,32 @@ async def upload(file: UploadFile = File(...)) -> Dict[str, Any]:
         data = json.loads(contents)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON file")
+    
+    # Try to encode to TOON, but handle gracefully if encoder is not implemented
+    toon_str = None
+    toon_error = None
     try:
         toon_str = to_toon(data)
+    except RuntimeError as e:
+        # Store the error message but don't fail the entire request
+        # This allows users to still see JSON token counts
+        toon_error = str(e)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        # For other errors, still store but don't fail
+        toon_error = f"Error encoding to TOON: {str(e)}"
+    
+    # Get token comparison (this will still work even if TOON encoding failed)
     result = compare_formats(data)
+    
+    # If TOON encoding failed, set toon_tokens to None or same as JSON
+    if toon_str is None and toon_error:
+        # Adjust comparison to show only JSON tokens
+        result['toon_tokens'] = result.get('json_tokens', 0)
+        result['savings'] = 0.0
+    
     return {
         "toon": toon_str,
+        "toon_error": toon_error,  # Include error message for frontend display
         "comparison": result,
+        "original_json": json.dumps(data, indent=2),  # Include original JSON for decoder button
     }

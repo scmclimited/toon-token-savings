@@ -7,7 +7,9 @@ fastapi>=0.110
 uvicorn>=0.27
 pydantic>=2.5
 pytest>=7.4
-toon-format
+# Use GitHub version - PyPI version (0.1.0) doesn't have encoder implemented
+# Install with: pip install git+https://github.com/toon-format/toon-python.git
+git+https://github.com/toon-format/toon-python.git
 tiktoken
 python-dotenv
 requests

@@ -22,7 +22,8 @@ function ResultCharts({ comparison }) {
     title: 'Token counts by format',
     yaxis: { title: 'Tokens' },
     xaxis: { title: 'Format' },
-    margin: { t: 40, l: 60, r: 20, b: 40 },
+    margin: { t: 35, l: 50, r: 15, b: 35 },
+    font: { size: 11 },
   };
 
   const lineData = [
@@ -37,16 +38,17 @@ function ResultCharts({ comparison }) {
     title: 'Relative savings (%)',
     yaxis: { title: 'Percentage', ticksuffix: '%', range: [0, 100] },
     xaxis: { title: '' },
-    margin: { t: 40, l: 60, r: 20, b: 40 },
+    margin: { t: 35, l: 50, r: 15, b: 35 },
+    font: { size: 11 },
   };
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-      <div style={{ flex: '1 1 300px' }}>
-        <Plot data={barData} layout={barLayout} config={{ responsive: true }} />
+    <div className="space-y-4">
+      <div className="bg-slate-50 rounded-lg p-3">
+        <Plot data={barData} layout={barLayout} config={{ responsive: true, displayModeBar: false }} style={{ width: '100%', height: '250px' }} />
       </div>
-      <div style={{ flex: '1 1 300px' }}>
-        <Plot data={lineData} layout={lineLayout} config={{ responsive: true }} />
+      <div className="bg-slate-50 rounded-lg p-3">
+        <Plot data={lineData} layout={lineLayout} config={{ responsive: true, displayModeBar: false }} style={{ width: '100%', height: '250px' }} />
       </div>
     </div>
   );

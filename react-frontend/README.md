@@ -4,7 +4,7 @@ This directory contains a simple **React** application for exploring token savin
 
 ## Getting started
 
-1. **Install Node.js** (version 18 or newer) and npm.  On most systems you can run:
+1. **Install Node.js** (version 18 or newer) and npm.  On most systems you can run:
 
    ```bash
    node --version
@@ -18,6 +18,8 @@ This directory contains a simple **React** application for exploring token savin
    ```
 
    This installs React, Plotly, Axios and the `react-scripts` build tool.
+
+   **Note on security vulnerabilities**: After installation, `npm audit` may report vulnerabilities in dev dependencies (jest, webpack-dev-server, etc.). These are known issues in `react-scripts@5.0.1` and are safe to ignore for development. **Do not run `npm audit fix --force`** as it will break the installation by downgrading `react-scripts` to an invalid version.
 
 3. **Start the development server**:
 

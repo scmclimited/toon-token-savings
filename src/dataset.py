@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from toon import dumps as toon_dumps, loads as toon_loads
+    from toon_format import encode as toon_dumps, decode as toon_loads
 except Exception:
     toon_dumps = None  # type: ignore
     toon_loads = None  # type: ignore
@@ -79,13 +79,25 @@ def to_toon(data: Any) -> str:
     -------
     str
         A TOON formatted string.
+    
+    Raises
+    ------
+    RuntimeError
+        If toon-format is not installed or encoder is not implemented.
     """
     if toon_dumps is None:
         raise RuntimeError(
             "The 'toon-format' package is required to encode data into TOON. "
-            "Install it with `pip install toon-format`."
+            "Install it from GitHub with: `pip install git+https://github.com/toon-format/toon-python.git`"
         )
-    return toon_dumps(data)
+    try:
+        return toon_dumps(data)
+    except NotImplementedError as e:
+        raise RuntimeError(
+            "The TOON encoder is not yet implemented in the installed version of 'toon-format'. "
+            "The PyPI version (0.1.0) doesn't have a working encoder. "
+            "Install the GitHub version instead: `pip uninstall toon-format -y && pip install git+https://github.com/toon-format/toon-python.git`"
+        ) from e
 
 
 def from_toon(toon_string: str) -> Any:
