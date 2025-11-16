@@ -13,3 +13,9 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
+# Ensure the python-backend directory is on the path so that the `src`
+# package (located under python-backend/src) can be imported.
+backend_dir = project_root / "python-backend"
+if str(backend_dir) not in sys.path:
+    sys.path.insert(0, str(backend_dir))
+

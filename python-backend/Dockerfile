@@ -7,21 +7,17 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --upgrade pip
 
-# Copy requirements and project configuration first for better caching
-COPY requirements.txt pyproject.toml README.md ./
-
-# Copy application code (needed for editable install)
-COPY src/ ./src/
-COPY data/ ./data/
+# Copy backend source (including requirements) and pyproject for editable install
+COPY pyproject.toml ./
+COPY python-backend ./python-backend
+COPY data ./data
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir -e .
-
-# Copy tests (not needed for installation)
-COPY tests/ ./tests/
+RUN pip install --no-cache-dir -r python-backend/requirements.txt \
+    && pip install --no-cache-dir -e .
 
 # Expose FastAPI port
 EXPOSE 8000

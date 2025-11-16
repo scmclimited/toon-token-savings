@@ -4,7 +4,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile.backend
+      dockerfile: python-backend/Dockerfile
     container_name: toon-token-savings-backend
     ports:
       - "8000:8000"
@@ -12,7 +12,7 @@ services:
       - PYTHONUNBUFFERED=1
     volumes:
       # Mount source code for development (optional - comment out for production)
-      - ./src:/app/src:ro
+      - ./python-backend/src:/app/src:ro
       - ./data:/app/data:ro
     restart: unless-stopped
     healthcheck:
@@ -27,7 +27,7 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: Dockerfile.frontend
+      dockerfile: react-frontend/Dockerfile
       args:
         REACT_APP_API_URL: /api
     container_name: toon-token-savings-frontend

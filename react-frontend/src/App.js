@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import UploadForm from './components/UploadForm';
 import ResultCharts from './components/ResultCharts';
 import ContextRadar from './components/ContextRadar';
@@ -6,6 +7,13 @@ import InfrastructureMetrics from './components/InfrastructureMetrics';
 import DatasetDownload from './components/DatasetDownload';
 import axios from 'axios';
 import config from './config';
+import {
+  setComparisonData,
+  setDecodedJson,
+  setShowJson,
+  setIsDecoding,
+  setLoadingSample,
+} from './store/appSlice';
 
 // Root component for the React frontend.  It provides a simple UI for
 // uploading a JSON file, calling the FastAPI backend to convert it to
@@ -13,13 +21,17 @@ import config from './config';
 // also renders a radar chart comparing context windows for common
 // foundation models.
 function App() {
-  const [comparison, setComparison] = useState(null);
-  const [toon, setToon] = useState('');
-  const [toonError, setToonError] = useState(null);
-  const [originalJson, setOriginalJson] = useState('');
-  const [showJson, setShowJson] = useState(false);
-  const [decodedJson, setDecodedJson] = useState('');
-  const [loadingSample, setLoadingSample] = useState(true);
+  const dispatch = useDispatch();
+  const {
+    comparison,
+    toon,
+    toonError,
+    originalJson,
+    showJson,
+    decodedJson,
+    isDecoding,
+    loadingSample,
+  } = useSelector((state) => state.app);
 
   /**
    * Handler invoked when a file is uploaded via the UploadForm.
@@ -28,13 +40,19 @@ function App() {
    * `comparison`, and optionally a `toon_error` message.
    */
   const handleUpload = (result) => {
-    setToon(result.toon || '');
-    setToonError(result.toon_error || null);
-    setComparison(result.comparison);
-    setOriginalJson(result.original_json || '');
-    setShowJson(false);
-    setDecodedJson('');
-    setLoadingSample(false);
+    const prettyJson = result.original_json || '';
+    dispatch(
+      setComparisonData({
+        comparison: result.comparison,
+        toon: result.toon || '',
+        toonError: result.toon_error || null,
+        originalJson: prettyJson,
+        decodedJson: '', // Do NOT set decodedJson here - let it be decoded on demand
+      })
+    );
+    dispatch(setShowJson(false));
+    dispatch(setIsDecoding(false));
+    dispatch(setLoadingSample(false));
   };
 
   /**
@@ -70,26 +88,45 @@ function App() {
         handleUpload(uploadResponse.data);
       } catch (error) {
         console.error('Error loading sample data:', error);
-        setLoadingSample(false);
+        dispatch(setLoadingSample(false));
         // Don't show error to user - just silently fail and let them upload their own file
       }
     };
 
     loadSampleData();
-  }, []); // Empty dependency array - only run on mount
+  }, [dispatch]); // Empty dependency array - only run on mount
 
-  const handleDecode = async () => {
+  const handleDecodeJson = async () => {
     if (!toon) return;
-    
+
+    // If we already have decoded JSON, just show it
+    if (decodedJson) {
+      dispatch(setShowJson(true));
+      return;
+    }
+
+    // If we have the original JSON from the upload, use that
+    if (originalJson) {
+      dispatch(setDecodedJson(originalJson));
+      dispatch(setShowJson(true));
+      return;
+    }
+
+    // Otherwise, decode from TOON via API
+    dispatch(setIsDecoding(true));
     try {
       const response = await axios.post(`${config.API_BASE_URL}/decode`, {
-        toon: toon
+        toon: toon,
       });
-      setDecodedJson(JSON.stringify(response.data.data, null, 2));
-      setShowJson(true);
+      const formatted = JSON.stringify(response.data.data, null, 2);
+      dispatch(setDecodedJson(formatted));
+      dispatch(setShowJson(true));
     } catch (err) {
-      setDecodedJson(`Error: ${err.response?.data?.detail || err.message}`);
-      setShowJson(true);
+      const errorMessage = `Error: ${err.response?.data?.detail || err.message}`;
+      dispatch(setDecodedJson(errorMessage));
+      dispatch(setShowJson(true));
+    } finally {
+      dispatch(setIsDecoding(false));
     }
   };
 
@@ -181,12 +218,21 @@ function App() {
                       <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                         <div className="flex items-center justify-between mb-3">
                           <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wide">TOON Representation</h3>
-                          <button
-                            onClick={handleDecode}
-                            className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors whitespace-nowrap"
-                          >
-                            {showJson ? 'Hide JSON' : 'Decode to JSON'}
-                          </button>
+                          {!showJson && (
+                            <button
+                              type="button"
+                              onClick={handleDecodeJson}
+                              disabled={isDecoding}
+                              aria-busy={isDecoding}
+                              className={`px-3 py-1.5 text-white text-xs font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors whitespace-nowrap ${
+                                isDecoding
+                                  ? 'bg-blue-300 cursor-not-allowed'
+                                  : 'bg-blue-600 hover:bg-blue-700'
+                              }`}
+                            >
+                              {isDecoding ? 'Decoding...' : 'Decode to JSON'}
+                            </button>
+                          )}
                         </div>
                         <pre className="whitespace-pre-wrap text-xs text-slate-800 font-mono overflow-x-auto max-h-96 overflow-y-auto">
                           {toon}
@@ -196,7 +242,16 @@ function App() {
                     
                     {showJson && (
                       <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
-                        <h3 className="text-xs font-semibold text-slate-700 mb-3 uppercase tracking-wide">Decoded JSON</h3>
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Decoded JSON</h3>
+                          <button
+                            type="button"
+                            onClick={() => dispatch(setShowJson(false))}
+                            className="px-3 py-1.5 text-white text-xs font-medium rounded-lg bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors whitespace-nowrap"
+                          >
+                            Hide JSON
+                          </button>
+                        </div>
                         <pre className="whitespace-pre-wrap text-xs text-slate-800 font-mono overflow-x-auto max-h-96 overflow-y-auto">
                           {decodedJson || originalJson}
                         </pre>
